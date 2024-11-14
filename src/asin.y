@@ -7,10 +7,21 @@
 %}
 
 %token PARA_ PARC_ MAS_ MENOS_ POR_ DIV_ AND_ OR_ IGUAL_ IGUALIGUAL_ DIF_ MAYOR_ MENOR_ MAYIG_ MENIG_ TRUE_ FALSE_ INT_ BOOL_ RETURN_ READ_ PRINT_ IF_ ELSE_ CORA_ CORC_ COMA_ LLA_ LLC_ PYC_ EXC_ FOR_ COMENT_
-%token CTE_ ID_
+%token<ident> ID_
+%token<cent>  CTE_
+
+%union {
+char *ident;
+int cent;
+}
+
+%type  <list> listDecla 
+%type  <texp> 
+
+
 
 %%
-programa      : listDecla
+programa      : listDecla  
               ;
 
 listDecla     : decla
@@ -21,10 +32,52 @@ decla         : declaVar
               | declaFunc
               ;
 
-declaVar      : tipoSimp ID_ PYC_
-              | tipoSimp ID_ IGUAL_ const PYC_
-              | tipoSimp ID_ CORA_ CTE_ CORC_ PYC_
-              ;
+-- declaVar      : tipoSimp ID_ PYC_
+--               | tipoSimp ID_ IGUAL_ const PYC_
+--               | tipoSimp ID_ CORA_ CTE_ CORC_ PYC_
+--               ;
+declaVar : tipoSimp ID_ PYC_
+        {
+            // Intentar insertar la variable en la TdS
+            if (!insTdS($2, VARIABLE, $1.t, niv, dvar, -1)) {  
+                yyerror("Variable ya declarada");
+            } else {
+                // Reservar espacio para la variable
+                dvar += TALLA_TIPO_SIMPLE;
+            }
+        }
+        | tipoSimp ID_ IGUAL_ const PYC_      
+            // Intentar insertar la variable en la TdS
+            if (!insTdS($2, VARIABLE, $1.t, niv, dvar, -1)) {
+                yyerror("Variable ya declarada");
+            } else {
+                // Comprobar la compatibilidad de tipos
+                if ($4.t != $1.t) {
+                    yyerror("Error: Tipo de inicialización incompatible");
+                    eliminarUltimaEntradaTdS(); // Eliminar variable de la TdS
+                } else {
+                    // Reservar espacio para la variable
+                    dvar += TALLA_TIPO_SIMPLE;
+                }
+            }
+        }
+        | tipoSimp ID_ CORA_ CTE_ CORC_ PYC_  
+        {
+            // Verificar que el tamaño del array sea válido
+            if ($4 <= 0) {
+                yyerror("Error: Tamaño del array inválido");
+            } else {
+                // Insertar el array en la Tabla de Arrays (TdA)
+                int ref = insTdA($1.t, $4); // Tipo de los elementos y tamaño
+                if (!insTdS($2, VARIABLE, T_ARRAY, niv, dvar, ref)) {
+                    yyerror("Array ya declarado");
+                } else {
+                    // Reservar espacio en memoria para el array
+                    dvar += $4 * TALLA_TIPO_SIMPLE;
+                }
+            }
+        }
+        ;
 
 const         : CTE_
               | TRUE_
@@ -35,8 +88,36 @@ tipoSimp      : INT_
               | BOOL_
               ;
 
-declaFunc     : tipoSimp ID_ PARA_ paramForm PARC_ bloque
-              ;
+
+-- declaFunc   : tipoSimp ID_ PARA_ paramForm PARC_ bloque
+
+declaFunc
+    -- :    $1    $2
+       : tipoSimp ID_
+         {
+             int tipo = $1;
+             char *nombre = $2;
+             dvar = 0;
+             niv++;
+             cargaContexto(niv);
+         } PARA_ paramForm PARC_
+         {
+             int refDom = insTdD(-1, T_VACIO);
+             if (!insTdS($2, FUNCION, $1, niv, 0, refDom)) {
+                 yyerror("Error: la función ya está declarada.");
+             }
+         }
+         bloque
+         {
+             if (verTdS) {
+                 mostrarTdS();
+             }
+             descargaContexto(niv);
+             niv--;
+         }
+       ;
+
+
 
 paramForm     :
               | listParamForm

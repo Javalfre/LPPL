@@ -41,7 +41,7 @@ typedef struct inf  /* Estructura para las funciones                         */
 
 /*************************** Variables globales de uso en todo el compilador */
 int dvar;                     /* Desplazamiento en el Segmento de Variables  */
-int niv;                      /* Nivel de anidamiento "global" o "local"     */
+int niv;                      /* Nivel de anidamiento "global 0" o "local 1"     */
 
 /************************************* Operaciones para la gestion de la TDS */
 void cargaContexto (int n) ;

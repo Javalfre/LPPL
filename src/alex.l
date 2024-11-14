@@ -25,7 +25,6 @@ entero          {digito}+
 real1		        {digito}*\.{digito}+
 real2           {digito}+\.{digito}*
 real            {real1}|{real2}
-cte		          {entero}|{real} 
 comentario      \/\/.*\n
 saltodelinea    [\n]
 
@@ -50,7 +49,6 @@ saltodelinea    [\n]
 "<"             { retornar (MENOR_) ; }
 ">="            { retornar (MAYIG_) ; }
 "<="            { retornar (MENIG_) ; }
-{numero}        { retornar (CTE_) ; }
 "true"          { retornar (TRUE_) ; }
 "false"         { retornar (FALSE_) ; }
 "int"           { retornar (INT_) ; }
