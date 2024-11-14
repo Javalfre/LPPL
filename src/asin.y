@@ -21,16 +21,24 @@ int cent;
 
 
 %%
-programa      : listDecla  
+programa      : listDecla 
+        {
+            niv = 0;
+            dvar = 0;
+            cargaContexto(niv);
+            if(verTdS) mostrarTdS();
+        } 
               ;
 
-listDecla     : decla
-              | listDecla decla
-              ;
+listDecla    
+	: decla { $$ = $1; }
+	|listDecla decla { $$ = $1 + $2; }
+    ;
 
-decla         : declaVar
-              | declaFunc
-              ;
+decla
+	: declaVar { $$ = 0; }
+	| declaFunc { $$ = $1; }
+    ;
 
 -- declaVar      : tipoSimp ID_ PYC_
 --               | tipoSimp ID_ IGUAL_ const PYC_
