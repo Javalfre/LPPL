@@ -28,16 +28,16 @@ programa      : listDecla
             cargaContexto(niv);
             if(verTdS) mostrarTdS();
         } 
-              ;
+        ;
 
 listDecla    
-	: decla { $$ = $1; }
+	: decla { $$ = $1; } 
 	|listDecla decla { $$ = $1 + $2; }
     ;
 
 decla
 	: declaVar { $$ = 0; }
-	| declaFunc { $$ = $1; }
+	| declaFunc { $$ = $1; } -- EXPLICAR
     ;
 
 -- declaVar      : tipoSimp ID_ PYC_
@@ -87,36 +87,51 @@ declaVar : tipoSimp ID_ PYC_
         }
         ;
 
-const         : CTE_
-              | TRUE_
-              | FALSE_
+-- PREGUNTAR:
+--            $1, TRUE, FALSE es correcto?  o directamente poner 1 o 2
+--            hay que comprobar la tdS
+
+const         : CTE_ { 
+                        $$ = $1
+                        $$.t = $1.t
+                    
+                     }
+
+              | TRUE_ {
+                        $$ = TRUE
+                        $$.t = T_LOGICO
+                      }
+
+              | FALSE_ {
+                        $$ = FALSE
+                        $$.t = T_LOGICO
+                       }
               ;
 
-tipoSimp      : INT_
-              | BOOL_
-              ;
 
+tipoSimp      : INT_ {$$ = T_ENTERO}
+              | BOOL_ {$$ = T_LOGICO}
+              ;
+-- PREGUNTAR: hemos pusto $$ en vez de $$.t para tipoSimp, porque solo puede contener tipos
 
 -- declaFunc   : tipoSimp ID_ PARA_ paramForm PARC_ bloque
 
+
 declaFunc
     -- :    $1    $2
-       : tipoSimp ID_
+       : tipoSimp ID_ PARA_ paramForm PARC_ bloque
          {
              int tipo = $1;
              char *nombre = $2;
              dvar = 0;
              niv++;
              cargaContexto(niv);
-         } PARA_ paramForm PARC_
-         {
+        
              int refDom = insTdD(-1, T_VACIO);
              if (!insTdS($2, FUNCION, $1, niv, 0, refDom)) {
                  yyerror("Error: la función ya está declarada.");
              }
-         }
-         bloque
-         {
+         
              if (verTdS) {
                  mostrarTdS();
              }
@@ -125,17 +140,25 @@ declaFunc
          }
        ;
 
+-- PREGUNTA TOCHA, cuando comprobamos los tipos?
+-- comprobamos dentro de la regla declaFunc, que tenemos tipoSimp y bloque?
+-- o comprobamos luego mas adelante en la regla bloque, usando: tabla de Simbolos con obtTdS!!.
+-- hay que poner cargarContexto aqui? declarando una funcion seguimos en contexto 0?
 
-
-paramForm     :
+paramForm     : 
               | listParamForm
               ;
 
-listParamForm : tipoSimp ID_
+listParamForm : tipoSimp ID_ 
               | tipoSimp ID_ COMA_ listParamForm
               ;
 
-bloque        : LLA_ declaVarLocal listInst RETURN_ expre PYC_ LLC_
+bloque        : LLA_ declaVarLocal listInst RETURN_ expre PYC_ LLC_ 
+                {
+                    if () {
+                        yyerror("Error: Tipo de retorno incompatible");
+                    }   
+                }
               ;
 
 declaVarLocal :
