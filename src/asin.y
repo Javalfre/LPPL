@@ -119,6 +119,7 @@ tipoSimp      : INT_ {$$ = T_ENTERO}
 
 declaFunc
     -- :    $1    $2
+    --     int    main (      intx, int y ) { }
        : tipoSimp ID_ PARA_ paramForm PARC_ bloque
          {
              int tipo = $1;
@@ -152,12 +153,20 @@ paramForm     :
 listParamForm : tipoSimp ID_ 
               | tipoSimp ID_ COMA_ listParamForm
               ;
+-- int    main (      intx, int y ) { }
 
 bloque        : LLA_ declaVarLocal listInst RETURN_ expre PYC_ LLC_ 
                 {
-                    if () {
+                    -- Extraer info de la función actual (queromos el timpoSimp de declaFunc)
+                    INF *inf = obtTdS(-1);
+                    char nombre = inf.nom;
+                    SIMB *simb = obtTdS(nombre);
+                    int tipo = simb.t;
+
+                    -- Comprobar que el tipo de retorno de la función es correcto
+                    if (tipo != $5.t) {
                         yyerror("Error: Tipo de retorno incompatible");
-                    }   
+                    }
                 }
               ;
 
@@ -194,7 +203,7 @@ expreOP       :
               | expre
               ;
 
-expre         : expreLogic
+expre         : expreLogic { $$. = $1; }
               | ID_ IGUAL_ expre
               | ID_ CORA_ expre CORC_ IGUAL_ expre
               ;
